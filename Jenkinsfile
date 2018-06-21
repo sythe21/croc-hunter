@@ -21,7 +21,7 @@ volumes:[
   node ('jenkins-pipeline') {
 
     def pwd = pwd()
-    def chart_dir = "${pwd}/charts/croc-hunter"
+    def chart_dir = "${pwd}/charts/s3api"
 
     checkout scm
 
@@ -61,11 +61,18 @@ volumes:[
     // compile tag list
     def image_tags_list = pipeline.getMapValues(image_tags_map)
 
+    stage ('init') {
+
+      container('golang') {
+        sh "go get -u github.com/golang/dep/cmd/dep"
+        sh "dep ensure"
+      }
+    }
+
     stage ('compile and test') {
 
       container('golang') {
         sh "go test -v -race ./..."
-        sh "make bootstrap build"
       }
     }
 

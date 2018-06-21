@@ -1,4 +1,4 @@
-# Includes complete Jenkins configuration in order to run croc-hunter pipeline
+# Includes complete Jenkins configuration in order to run s3api pipeline
 # To install on your own cluster, run:
 # helm --namespace jenkins --name jenkins -f ./jenkins-values.yaml install stable/jenkins
 
