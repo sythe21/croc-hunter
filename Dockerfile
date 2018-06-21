@@ -17,7 +17,7 @@ ENV GIT_SHA $VCS_REF
 ENV GOPATH /go
 RUN cd $GOPATH/src/github.com/sythe21/s3api && go install -v .
 
-CMD ["main"]
+CMD ["s3api"]
 
 EXPOSE 8888
 	
