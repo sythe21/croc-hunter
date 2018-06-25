@@ -73,9 +73,8 @@ build-%:
 	  -o ${GOPATH}/bin/${BIN} \
 	  cmd/s3api/main.go
 
-fmt: $(GO_SOURCES)
-	gofmt -w $<
-	goimports -w $<
+fmt:
+	go fmt ./...
 
 check: vet lint
 

@@ -17,6 +17,7 @@ import (
   ];
 */
 
+// User defines a okta user
 type User struct {
 	ID        int    `json:"id"`
 	FirstName string `json:"firstName"`
@@ -26,7 +27,7 @@ type User struct {
 
 func main() {
 	users := []User{{FirstName: "Dhiraj", LastName: "Ray", Email: "dhiraj@gmail.com"}}
-	usersJson, _ := json.Marshal(users)
+	usersJSON, _ := json.Marshal(users)
 	var RootCmd = &cobra.Command{
 		Use:   "s3api",
 		Short: "Simple HTTP server read and write to an s3 bucket",
@@ -35,7 +36,7 @@ func main() {
 			http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
 				fmt.Printf("Headers %v", r.Header)
 				w.Header().Add("Content-Type", "application/json")
-				w.Write(usersJson)
+				w.Write(usersJSON)
 			})
 
 			log.Fatal(http.ListenAndServe(":8888", nil))
