@@ -3,27 +3,29 @@
 # Declare name/value pairs to be passed into your templates.
 # name: value
 
-serviceType: ClusterIP
-servicePort: 80
-containerPort: 8080
-component: "s3api"
-replicas: 3
-image: "quay.io/lachie83/s3api"
-imageTag: "latest"
-imagePullPolicy: "Always"
-## If you have a private registry you specify a secret to use
-#imagePullSecrets:
-cpu: "10m"
-memory: "128Mi"
+name: "s3api"
+service:
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 8888
+image:
+  name: "rholcombe/s3api"
+  tag: "latest"
+  pullPolicy: "Always"
+  replicaCount: 3
+resources:
+  cpu: "100m"
+  memory: "128Mi"
 ## Ingress settings
 ingress:
-  enabled: true
-  hostname: s3api.acs.az.estrado.io
+  enabled: false
+  hostname:
   annotations:
      kubernetes.io/ingress.class: nginx
-     kubernetes.io/tls-acme: "true"
-  tls: true
-## PodDisruptionBudget
-pdb:
-  enabled: false
-  minAvailable: 2
+  tls: false
+livenessProbe:
+  enabled: true
+  path: healthz
+readinessProbe:
+  enabled: true
+  path: healthz

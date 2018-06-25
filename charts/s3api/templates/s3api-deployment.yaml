@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{.Release.Name}}"
+  labels:
+    heritage: {{.Release.Service | quote }}
+    release: {{.Release.Name | quote }}
+    chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+    component: "{{.Release.Name}}-{{.Values.name}}"
+spec:
+  replicas: {{ .Values.image.replicaCount }}
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      component: "{{.Release.Name}}-{{.Values.name}}"
+  template:
+    metadata:
+      labels:
+        heritage: {{.Release.Service | quote }}
+        release: {{.Release.Name | quote }}
+        chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+        component: "{{.Release.Name}}-{{.Values.name}}"
+    spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecrets }}
+      {{- end }}
+      containers:
+        - name: "{{ .Release.Name }}"
+          image: "{{.Values.image.name}}:{{.Values.image.tag}}"
+          imagePullPolicy: "{{.Values.image.pullPolicy}}"
+          ports:
+          - name: http
+            containerPort: {{.Values.service.internalPort}}
+          resources:
+            requests:
+{{ toYaml .Values.image.resources | indent 14 }}
+          env:
+          - name: WORKFLOW_RELEASE
+            value: {{.Release.Name | quote }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: "{{.Values.livenessProbe.path}}"
+              port: http
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: "{{.Values.readinessProbe.path}}"
+              port: http
+          {{- end }}

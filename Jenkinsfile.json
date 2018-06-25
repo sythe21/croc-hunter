@@ -1,17 +1,16 @@
 {
   "app": {
     "name": "s3api",
-    "replicas": "3",
-    "cpu": "100m",
-    "memory": "128Mi",
+    "imageReplicaCount": "3",
     "test": true,
-    "hostname": "s3api.cluster.local"
+    "ingressEnable": true,
+    "ingressHostname": "s3api.gke.rholcombe30.com"
   },
   "container_repo": {
     "host": "index.docker.io",
     "master_acct": "rholcombe30@gmail.com",
     "jenkins_creds_id": "docker_creds",
-    "image": "s3api",
+    "image": "rholcombe/s3api",
     "image_scanning": false
   },
   "pipeline": {

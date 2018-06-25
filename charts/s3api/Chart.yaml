@@ -1,9 +1,9 @@
 name: s3api
-home: https://github.com/lachie83/s3api
-version: 0.3.1
-description: Live out your dream hunting Crocs
+home: https://github.com/sythe21/s3api
+version: 1.0.0
+description: S3 API
 sources:
-  - https://github.com/lachie83/s3api
+  - https://github.com/sythe21/s3api
 maintainers:
-  - name: Lachlan Evenson
-    email: lachlan.evenson@gmail.com
+  - name: Ryan Holcombe
+    email: rholcombe30@gmail.com

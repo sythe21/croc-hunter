@@ -6,7 +6,7 @@ metadata:
   annotations:
 {{ toYaml .Values.ingress.annotations | indent 4 }}
 {{- end }}
-  name: {{ template "fullname" . }}
+  name: "{{.Release.Name}}"
 spec:
   rules:
   - host: {{ .Values.ingress.hostname | quote }}
@@ -14,8 +14,8 @@ spec:
       paths:
       - path: /
         backend:
-          serviceName: {{ template "fullname" . }}
-          servicePort: {{ .Values.servicePort }}
+          serviceName: "{{.Release.Name}}"
+          servicePort: {{ .Values.service.externalPort }}
 {{- if .Values.ingress.tls }}
   tls:
   - secretName: {{ .Values.ingress.hostname | quote }}

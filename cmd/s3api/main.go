@@ -38,6 +38,9 @@ func main() {
 				w.Header().Add("Content-Type", "application/json")
 				w.Write(usersJSON)
 			})
+			http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(200)
+			})
 
 			log.Fatal(http.ListenAndServe(":8888", nil))
 
