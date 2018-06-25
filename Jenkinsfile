@@ -20,6 +20,7 @@ volumes:[
   node ('jenkins-pipeline') {
 
     def pwd = pwd()
+    def src_dir = "github.com/sythe21/s3api"
     def chart_dir = "${pwd}/charts/s3api"
 
     git 'https://github.com/sythe21/s3api.git'
@@ -37,18 +38,15 @@ volumes:[
             """
         }
         stage ('go dependencies') {
-            sh """
-            make init-build
-            make dep
-            """
+            sh "cd \$GOPATH/src/${go_dir} && make init-build && make dep"
           }
 
         stage ('go build') {
-            sh "make build"
+            sh "cd \$GOPATH/src/${go_dir} && make build"
         }
 
         stage ('go test') {
-            sh "make test"
+            sh "cd \$GOPATH/src/${go_dir} && make test"
         }
     }
 
