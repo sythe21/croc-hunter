@@ -49,7 +49,7 @@ volumes:[
 
         sh """
         helm lint ${chart_dir}
-        helm upgrade --dry-run --install ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml
+        helm upgrade --dry-run --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml
         """
       }
     }
@@ -80,7 +80,7 @@ volumes:[
         container('helm') {
             sh """
             println "Running deployment"
-            sh "helm upgrade --install ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml --wait"
+            sh "helm upgrade --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml --wait"
             println "Application ${config.name} successfully deployed"
             """
         }
