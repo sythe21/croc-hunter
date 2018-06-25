@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
-	"os"
-	"net/http"
-	"log"
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/cobra"
+	"log"
+	"net/http"
+	"os"
 )
 
 /*
@@ -15,7 +15,7 @@ import (
     {id: 1, firstName: 'Hary', lastName: 'Pan', email: 'hary@gmail.com'},
     {id: 1, firstName: 'praks', lastName: 'pb', email: 'praks@gmail.com'},
   ];
- */
+*/
 
 type User struct {
 	ID        int    `json:"id"`
@@ -23,7 +23,6 @@ type User struct {
 	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
 }
-
 
 func main() {
 	users := []User{{FirstName: "Dhiraj", LastName: "Ray", Email: "dhiraj@gmail.com"}}

@@ -1,27 +1,22 @@
-FROM golang:1.10.3-alpine AS build-env
+FROM golang:1.10.3-alpine AS build-stage
 
-ENV GOPATH /go
-COPY . /go/src/github.com/sythe21/s3api
-RUN cd $GOPATH/src/github.com/sythe21/s3api && go install -v .
+ADD . /go/src/github.com/sythe21/s3api
+WORKDIR /go/src/github.com/sythe21/s3api
+RUN apk update && apk add make git
+RUN make build
 
+# Final Stage
+FROM alpine:3.7
 
-FROM alpine
-MAINTAINER Ryan Holcombe <rholcombe30@gmail.com>
-
-ARG VCS_REF
+ARG GIT_COMMIT
+ARG VERSION
 ARG BUILD_DATE
-
-ENV GIT_SHA $VCS_REF
-
-# Metadata
-LABEL org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/sythe21/s3api" \
-      org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.docker.dockerfile="/Dockerfile"
+LABEL REPO="https://github.com/sythe21/s3api"
+LABEL GIT_COMMIT=$GIT_COMMIT
+LABEL VERSION=$VERSION
+LABEL BUILD_DATE=$BUILD_DATE
 
 WORKDIR /
-COPY --from=build-env /go/bin/s3api /s3api
 
-EXPOSE 8888
-
+COPY --from=build-stage /go/bin/s3api /s3api
 ENTRYPOINT ["/s3api"]
