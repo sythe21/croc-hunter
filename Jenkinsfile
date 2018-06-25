@@ -32,7 +32,6 @@ volumes:[
         stage ('prepare') {
             // Move source to GOPATH
             sh """
-            apk add make
             mkdir -p \$GOPATH/src/github.com/sythe21
             ln -s \$(realpath .) \$GOPATH/src/github.com/sythe21
             """
