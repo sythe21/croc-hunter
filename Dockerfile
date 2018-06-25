@@ -1,16 +1,17 @@
 FROM golang:1.10.3-alpine AS build-env
 
-COPY . /go/src/github.com/sythe21/s3api
-
-ENV GIT_SHA $VCS_REF
 ENV GOPATH /go
+COPY . /go/src/github.com/sythe21/s3api
 RUN cd $GOPATH/src/github.com/sythe21/s3api && go install -v .
+
 
 FROM alpine
 MAINTAINER Ryan Holcombe <rholcombe30@gmail.com>
 
 ARG VCS_REF
 ARG BUILD_DATE
+
+ENV GIT_SHA $VCS_REF
 
 # Metadata
 LABEL org.label-schema.vcs-ref=$VCS_REF \

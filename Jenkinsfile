@@ -8,11 +8,11 @@
 def pipeline = new io.estrado.Pipeline()
 
 podTemplate(label: 'jenkins-pipeline', containers: [
-    containerTemplate(name: 'jnlp', image: 'lachlanevenson/jnlp-slave:3.10-1-alpine', args: '${computer.jnlpmac} ${computer.name}', workingDir: '/home/jenkins', resourceRequestCpu: '200m', resourceLimitCpu: '300m', resourceRequestMemory: '256Mi', resourceLimitMemory: '512Mi'),
-    containerTemplate(name: 'docker', image: 'docker:1.12.6', command: 'cat', ttyEnabled: true),
-    containerTemplate(name: 'golang', image: 'golang:1.8.3', command: 'cat', ttyEnabled: true),
-    containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.6.0', command: 'cat', ttyEnabled: true),
-    containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl:v1.4.8', command: 'cat', ttyEnabled: true)
+    containerTemplate(name: 'jnlp', image: 'lachlanevenson/jnlp-slave:3.10-1-alpine', args: '${computer.jnlpmac} ${computer.name}', workingDir: '/home/jenkins'),
+    containerTemplate(name: 'docker', image: 'docker:18.05', command: 'cat', ttyEnabled: true),
+    containerTemplate(name: 'golang', image: 'golang:1.10.3', command: 'cat', ttyEnabled: true),
+    containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.9.1', command: 'cat', ttyEnabled: true),
+    containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl:v1.8.14', command: 'cat', ttyEnabled: true)
 ],
 volumes:[
     hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
@@ -26,8 +26,7 @@ volumes:[
     checkout scm
 
     // read in required jenkins workflow config values
-    def inputFile = readFile('Jenkinsfile.json')
-    def config = new groovy.json.JsonSlurperClassic().parseText(inputFile)
+    def config = readJSON file: 'Jenkinsfile.json'
     println "pipeline config ==> ${config}"
 
     // continue only if pipeline enabled
@@ -61,20 +60,30 @@ volumes:[
     // compile tag list
     def image_tags_list = pipeline.getMapValues(image_tags_map)
 
-    stage ('init') {
+    container('golang') {
+        stage ('prepare') {
+            // Move source to GOPATH
+            sh """
+            mkdir -p \$GOPATH/src/github.com/sythe21
+            ln -s \$(realpath .) \$GOPATH/src/github.com/sythe21
+            """
+        }
+        stage ('download dependencies') {
+            sh """
+            cd \${GOPATH}/src/github.com/sythe21/s3api
+            go get -u github.com/golang/dep/cmd/dep
+            dep ensure
+            """
+          }
 
-      container('golang') {
-        sh "go get -u github.com/golang/dep/cmd/dep"
-        sh "dep ensure"
-      }
+        stage ('compile and test') {
+            sh """
+            cd \${GOPATH}/src/github.com/sythe21/s3api
+            go test -v -race ./...
+            """
+        }
     }
 
-    stage ('compile and test') {
-
-      container('golang') {
-        sh "go test -v -race ./..."
-      }
-    }
 
     stage ('test deployment') {
 
@@ -106,9 +115,21 @@ volumes:[
       container('docker') {
 
         // perform docker login to container registry as the docker-pipeline-plugin doesn't work with the next auth json format
-        withCredentials([[$class          : 'UsernamePasswordMultiBinding', credentialsId: config.container_repo.jenkins_creds_id,
-                        usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: config.container_repo.jenkins_creds_id, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
           sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD} ${config.container_repo.host}"
+        }
+
+        println "Running Docker build/publish: ${config.container_repo.host}/${config.container_repo.acct}/${config.container_repo.repo}:${config.container_repo.tags}"
+
+        docker.withRegistry("${config.container_repo.host}", "${config.container_repo..auth_id}") {
+
+            def img = docker.image("${config.container_repo.acct}/${config.container_repo.repo}")
+            sh "docker build --build-arg VCS_REF=${env.GIT_SHA} --build-arg BUILD_DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` -t ${config.container_repo.acct}/${config.container_repo.repo} ."
+            for (int i = 0; i < config.container_repo.tags.size(); i++) {
+                img.push(config.container_repo.tags.get(i))
+            }
+
+            return img.id
         }
 
         // build and publish container

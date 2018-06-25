@@ -1,20 +1,17 @@
 {
   "app": {
-    "name": "croc-hunter",
+    "name": "s3api",
     "replicas": "3",
-    "cpu": "10m",
+    "cpu": "100m",
     "memory": "128Mi",
     "test": true,
-    "hostname": "croc-hunter.acs.az.estrado.io"
+    "hostname": "s3api.cluster.local"
   },
   "container_repo": {
-    "host": "quay.io",
-    "master_acct": "lachie83",
-    "alt_acct": "lachie83",
-    "jenkins_creds_id": "quay_creds",
-    "repo": "croc-hunter",
-    "dockeremail": ".",
-    "dockerfile": "./",
+    "host": "index.docker.io",
+    "master_acct": "rholcombe30@gmail.com",
+    "jenkins_creds_id": "docker_creds",
+    "image": "s3api",
     "image_scanning": false
   },
   "pipeline": {
