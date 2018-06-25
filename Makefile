@@ -1,12 +1,12 @@
 
 BIN := s3api
-REGISTRY ?= docker.io/rholcombe
+REGISTRY ?= docker.io
+IMAGE := $(REGISTRY)/rholcombe/$(BIN)
 PKG := github.com/sythe21/$(BIN)
 
 VERSION := $(shell git describe --tags --always --dirty)
 GIT_COMMIT=$(shell git rev-parse HEAD)
 GIT_DIRTY=$(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
-IMAGE := $(REGISTRY)/$(BIN)
 MAJOR_VERSION := $(shell git describe --abbrev=0 2> /dev/null || echo '0.0.0' | build/increment_version.sh -M)
 MINOR_VERSION := $(shell git describe --abbrev=0 2> /dev/null || echo '0.0.0' | build/increment_version.sh -m)
 PATCH_VERSION := $(shell git describe --abbrev=0 2> /dev/null || echo '0.0.0' | build/increment_version.sh -p)
