@@ -1,0 +1,5 @@
+name: s3api
+image:
+  host: index.docker.io
+  jenkinsCredsId: docker_creds
+  name: rholcombe/s3api

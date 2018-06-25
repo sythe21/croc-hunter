@@ -1,12 +1,5 @@
 #!/usr/bin/groovy
 
-// load pipeline functions
-// Requires pipeline-github-lib plugin to load library from github
-
-@Library('github.com/lachie83/jenkins-pipeline@dev')
-
-def pipeline = new io.estrado.Pipeline()
-
 podTemplate(label: 'jenkins-pipeline', containers: [
     containerTemplate(name: 'jnlp', image: 'lachlanevenson/jnlp-slave:3.10-1-alpine', args: '${computer.jnlpmac} ${computer.name}', workingDir: '/home/jenkins', resourceRequestCpu: '50m'),
     containerTemplate(name: 'docker', image: 'docker:18.05', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m'),
@@ -20,13 +13,13 @@ volumes:[
   node ('jenkins-pipeline') {
 
     def pwd = pwd()
-    def src_dir = "github.com/sythe21/s3api"
     def chart_dir = "${pwd}/charts/s3api"
+    def go_dir = "github.com/sythe21/s3api"
 
     git 'https://github.com/sythe21/s3api.git'
 
     // read in required jenkins workflow config values
-    def config = readJSON file: 'Jenkinsfile.json'
+    def config = readYaml file: 'Jenkinsfile.yml'
     println "pipeline config ==> ${config}"
 
     container('golang') {
@@ -54,31 +47,17 @@ volumes:[
 
       container('helm') {
 
-        sh "helm lint ${chart_dir}"
-
-        // run dry-run helm chart installation
-        pipeline.helmDeploy(
-          dry_run       : true,
-          name          : config.app.name,
-          namespace     : config.app.name,
-          chart_dir     : chart_dir,
-          set           : [
-            "name": config.app.name,
-            "image.name": config.container_repo.image,
-            "image.tag": "latest",
-            "image.replicaCount": 1,
-            "ingress.enable": config.app.ingressEnable,
-            "ingress.hostname": config.app.ingressHostname,
-          ]
-        )
-
+        sh """
+        helm lint ${chart_dir}
+        helm upgrade --dry-run --install ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml
+        """
       }
     }
 
     container('docker') {
         stage ('docker login') {
             // perform docker login to container registry as the docker-pipeline-plugin doesn't work with the next auth json format
-            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: config.container_repo.jenkins_creds_id, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS']]) {
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: config.image.jenkinsCredsId, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS']]) {
               sh "make login"
             }
         }
@@ -92,27 +71,18 @@ volumes:[
         }
 
         stage ('docker push') {
-            println "Pushing docker images to repository ${config.container_repo.image}"
+            println "Pushing docker images to repository ${config.image.name}"
             sh "make push"
         }
     }
 
     stage ('deploy to kubernetes') {
         container('helm') {
-            pipeline.helmDeploy(
-                dry_run       : false,
-                name          : config.app.name,
-                namespace     : "default",
-                chart_dir     : chart_dir,
-                set           : [
-                    "name": config.app.name,
-                    "image.name": config.container_repo.image,
-                    "image.tag": "latest",
-                    "image.replicaCount": 1,
-                    "ingress.enable": config.app.ingressEnable,
-                    "ingress.hostname": config.app.ingressHostname,
-                ]
-            )
+            sh """
+            println "Running deployment"
+            sh "helm upgrade --install ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml --wait"
+            println "Application ${config.name} successfully deployed"
+            """
         }
     }
   }
