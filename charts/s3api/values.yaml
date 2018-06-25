@@ -25,7 +25,7 @@ ingress:
   tls: false
 livenessProbe:
   enabled: true
-  path: healthz
+  path: "/healthz"
 readinessProbe:
   enabled: true
-  path: healthz
+  path: "/healthz"

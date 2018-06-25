@@ -8,11 +8,10 @@
 def pipeline = new io.estrado.Pipeline()
 
 podTemplate(label: 'jenkins-pipeline', containers: [
-    containerTemplate(name: 'jnlp', image: 'lachlanevenson/jnlp-slave:3.10-1-alpine', args: '${computer.jnlpmac} ${computer.name}', workingDir: '/home/jenkins'),
-    containerTemplate(name: 'docker', image: 'docker:18.05', command: 'cat', ttyEnabled: true),
-    containerTemplate(name: 'golang', image: 'golang:1.10.3', command: 'cat', ttyEnabled: true),
-    containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.9.1', command: 'cat', ttyEnabled: true),
-    containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl:v1.10.4', command: 'cat', ttyEnabled: true)
+    containerTemplate(name: 'jnlp', image: 'lachlanevenson/jnlp-slave:3.10-1-alpine', args: '${computer.jnlpmac} ${computer.name}', workingDir: '/home/jenkins', resourceRequestCpu: '50m'),
+    containerTemplate(name: 'docker', image: 'docker:18.05', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m'),
+    containerTemplate(name: 'golang', image: 'golang:1.10.3', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m'),
+    containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.9.1', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m')
 ],
 volumes:[
     hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
@@ -28,15 +27,6 @@ volumes:[
     // read in required jenkins workflow config values
     def config = readJSON file: 'Jenkinsfile.json'
     println "pipeline config ==> ${config}"
-
-    // set additional git envvars for image tagging
-    pipeline.gitEnvVars()
-
-    // tag image with version, and branch-commit_id
-    def image_tags_map = pipeline.getContainerTags(config)
-
-    // compile tag list
-    def image_tags_list = pipeline.getMapValues(image_tags_map)
 
     container('golang') {
         stage ('prepare') {
@@ -67,8 +57,7 @@ volumes:[
 
       container('helm') {
 
-        // run helm chart linter
-        pipeline.helmLint(chart_dir)
+        sh "helm lint ${chart_dir}"
 
         // run dry-run helm chart installation
         pipeline.helmDeploy(
