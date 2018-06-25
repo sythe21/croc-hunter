@@ -1,6 +1,6 @@
 
 BIN := s3api
-REGISTRY ?= index.docker.io/rholcombe
+REGISTRY ?= docker.io/rholcombe
 PKG := github.com/sythe21/$(BIN)
 
 VERSION := $(shell git describe --tags --always --dirty)
@@ -108,8 +108,8 @@ tag-release:
 	docker tag $(BIN):local $(IMAGE):release
 
 push: tag
-	@echo "Pushing docker image to registry: latest ${VERSION} $(GIT_COMMIT)"
-	docker push $(IMAGE):${VERSION}
+	@echo "Pushing docker image to registry: latest $(VERSION) $(GIT_COMMIT)"
+	docker push $(IMAGE):$(VERSION)
 	docker push $(IMAGE):latest
 
 push-release: tag tag-release push
