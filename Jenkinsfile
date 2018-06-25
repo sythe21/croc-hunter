@@ -55,6 +55,8 @@ volumes:[
     }
 
     container('docker') {
+        sh "apk update && apk add make"
+
         stage ('docker login') {
             // perform docker login to container registry as the docker-pipeline-plugin doesn't work with the next auth json format
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: config.image.jenkinsCredsId, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS']]) {
@@ -63,11 +65,8 @@ volumes:[
         }
 
         stage ('docker build') {
-            sh """
             println "Building and tagging docker images"
-            make build
-            make tag
-            """
+            sh "make package && make tag"
         }
 
         stage ('docker push') {
@@ -78,11 +77,9 @@ volumes:[
 
     stage ('deploy to kubernetes') {
         container('helm') {
-            sh """
             println "Running deployment"
             sh "helm upgrade --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml --wait"
             println "Application ${config.name} successfully deployed"
-            """
         }
     }
   }
