@@ -43,17 +43,6 @@ volumes:[
         }
     }
 
-    stage ('helm verify') {
-
-      container('helm') {
-
-        sh """
-        helm lint ${chart_dir}
-        helm upgrade --dry-run --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml
-        """
-      }
-    }
-
     container('docker') {
         sh "apk update && apk add make"
 
@@ -75,8 +64,14 @@ volumes:[
         }
     }
 
-    stage ('deploy to kubernetes') {
-        container('helm') {
+    container('helm') {
+        stage ('helm verify') {
+            sh """
+            helm lint ${chart_dir}
+            helm upgrade --dry-run --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml
+            """
+        }
+        stage ('helm install') {
             println "Running deployment"
             sh "helm upgrade --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml --wait"
             println "Application ${config.name} successfully deployed"

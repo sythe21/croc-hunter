@@ -1,12 +1,4 @@
-FROM golang:1.10.3-alpine AS build-stage
-
-ADD . /go/src/github.com/sythe21/s3api
-WORKDIR /go/src/github.com/sythe21/s3api
-RUN apk update && apk add make git
-RUN make build
-
-# Final Stage
-FROM alpine:3.7
+FROM golang:1.10.3-alpine
 
 ARG GIT_COMMIT
 ARG VERSION
@@ -16,7 +8,10 @@ LABEL GIT_COMMIT=$GIT_COMMIT
 LABEL VERSION=$VERSION
 LABEL BUILD_DATE=$BUILD_DATE
 
-WORKDIR /
+ADD . /go/src/github.com/sythe21/s3api
+WORKDIR /go/src/github.com/sythe21/s3api
 
-COPY --from=build-stage /go/bin/s3api /s3api
-ENTRYPOINT ["/s3api"]
+RUN apk update && apk add make git
+RUN make build
+
+ENTRYPOINT ["/go/bin/s3api"]
