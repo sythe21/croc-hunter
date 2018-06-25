@@ -1,12 +1,12 @@
 
 BIN := s3api
-REGISTRY ?= ""
-IMAGE := rholcombe/$(BIN)
+REGISTRY ?= index.docker.io/rholcombe
 PKG := github.com/sythe21/$(BIN)
 
 VERSION := $(shell git describe --tags --always --dirty)
 GIT_COMMIT=$(shell git rev-parse HEAD)
 GIT_DIRTY=$(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
+IMAGE := $(REGISTRY)/$(BIN)
 MAJOR_VERSION := $(shell git describe --abbrev=0 2> /dev/null || echo '0.0.0' | build/increment_version.sh -M)
 MINOR_VERSION := $(shell git describe --abbrev=0 2> /dev/null || echo '0.0.0' | build/increment_version.sh -m)
 PATCH_VERSION := $(shell git describe --abbrev=0 2> /dev/null || echo '0.0.0' | build/increment_version.sh -p)
@@ -95,12 +95,12 @@ package-multistage:
 	docker build -f Dockerfile.multistage --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` --build-arg VERSION=${VERSION} --build-arg GIT_COMMIT=$(GIT_COMMIT) -t $(BIN):local .
 
 login: guard-DOCKER_USER guard-DOCKER_PASS
-	@echo "Logging in to registry ${REGISTRY}"
+	@echo "Logging in to dockerhub ${REGISTRY}"
 	docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} ${REGISTRY}
 
 tag:
 	@echo "Tagging: latest ${VERSION}"
-	docker tag $(BIN):local $(IMAGE):${VERSION}
+	docker tag $(BIN):local $(IMAGE):$(VERSION)
 	docker tag $(BIN):local $(IMAGE):latest
 
 tag-release:

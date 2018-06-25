@@ -44,7 +44,7 @@ volumes:[
     }
 
     container('docker') {
-        sh "apk update && apk add make"
+        sh "apk update && apk add make git"
 
         stage ('docker login') {
             // perform docker login to container registry as the docker-pipeline-plugin doesn't work with the next auth json format
