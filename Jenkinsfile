@@ -4,7 +4,7 @@ podTemplate(label: 'jenkins-pipeline', containers: [
     containerTemplate(name: 'jnlp', image: 'lachlanevenson/jnlp-slave:3.10-1-alpine', args: '${computer.jnlpmac} ${computer.name}', workingDir: '/home/jenkins', resourceRequestCpu: '50m'),
     containerTemplate(name: 'docker', image: 'docker:18.05', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m'),
     containerTemplate(name: 'golang', image: 'golang:1.10.3', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m'),
-    containerTemplate(name: 'fluxctl', image: 'rholcombe/fluxctl:v1.4.1', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m')
+    containerTemplate(name: 'fluxctl', image: 'rholcombe/fluxctl:v1.4.1', alwaysPullImage: true, command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m')
 ],
 volumes:[
     hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
@@ -76,7 +76,7 @@ volumes:[
         }
 
         stage ('release image') {
-            sh "fluxctl --url http://flux:3030/api/flux --controller=default:fluxhelmrelease/s3api -i rholcombe/s3api:$releaseTag"
+            sh "fluxctl release --url http://flux.flux.svc.cluster.local:3030/api/flux --controller=default:fluxhelmrelease/s3api -i rholcombe/s3api:$releaseTag"
         }
     }
   }
