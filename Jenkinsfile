@@ -4,7 +4,7 @@ podTemplate(label: 'jenkins-pipeline', containers: [
     containerTemplate(name: 'jnlp', image: 'lachlanevenson/jnlp-slave:3.10-1-alpine', args: '${computer.jnlpmac} ${computer.name}', workingDir: '/home/jenkins', resourceRequestCpu: '50m'),
     containerTemplate(name: 'docker', image: 'docker:18.05', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m'),
     containerTemplate(name: 'golang', image: 'golang:1.10.3', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m'),
-    containerTemplate(name: 'helm', image: 'lachlanevenson/k8s-helm:v2.9.1', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m')
+    containerTemplate(name: 'fluxctl', image: 'rholcombe/fluxctl:1.4.1', command: 'cat', ttyEnabled: true, resourceRequestCpu: '50m')
 ],
 volumes:[
     hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
@@ -17,6 +17,9 @@ volumes:[
     def go_dir = "github.com/sythe21/s3api"
 
     git 'https://github.com/sythe21/s3api.git'
+
+    def releaseTag = sh(returnStdout: true, script: "git describe --tags --always --dirty").trim()
+    def tags = [releaseTag, "latest"]
 
     // read in required jenkins workflow config values
     def config = readYaml file: 'Jenkinsfile.yml'
@@ -64,17 +67,16 @@ volumes:[
         }
     }
 
-    container('helm') {
-        stage ('helm verify') {
-            sh """
-            helm lint ${chart_dir}
-            helm upgrade --dry-run --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml
-            """
+    container('fluxctl') {
+
+        stage('approve release') {
+            withEnv(['HUBOT_DEFAULT_ROOM=hubot', 'HUBOT_URL=http://hubot:80']) {
+                hubotApprove message: 'Promote to Development?', tokens: "BUILD_NUMBER, BUILD_DURATION", status: 'ABORTED'
+            }
         }
-        stage ('helm install') {
-            println "Running deployment"
-            sh "helm upgrade --install --force ${config.name} ${chart_dir} --namespace=default --values jenkins-deploy.yml --wait"
-            println "Application ${config.name} successfully deployed"
+
+        stage ('release image') {
+            sh "fluxctl --url http://flux:3030/api/flux --controller=default:fluxhelmrelease/s3api -i rholcombe/s3api:$releaseTag"
         }
     }
   }
