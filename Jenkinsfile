@@ -70,7 +70,7 @@ volumes:[
     container('fluxctl') {
 
         stage('approve release') {
-            withEnv(['HUBOT_DEFAULT_ROOM=hubot', 'HUBOT_URL=http://hubot:80']) {
+            withEnv(['HUBOT_DEFAULT_ROOM=hubot', 'HUBOT_URL=http://hubot.default.svc.cluster.local:80']) {
                 hubotApprove message: 'Promote to Development?', tokens: "BUILD_NUMBER, BUILD_DURATION", status: 'ABORTED'
             }
         }
