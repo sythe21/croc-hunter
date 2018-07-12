@@ -52,7 +52,7 @@ init: init-build
 	go get -d github.com/goreleaser/goreleaser
 	cd ${GOPATH}/src/github.com/goreleaser/goreleaser && dep ensure -vendor-only && make setup build && mv goreleaser ${GOPATH}/bin
         # this craziness is due to a current dep problem between osx and linux versions
-        dep status 2>&1 > /dev/null || dep init 2>&1 > /dev/null || dep ensure
+	dep status 2>&1 > /dev/null || dep init 2>&1 > /dev/null || dep ensure
 
 dep:
 	dep ensure
