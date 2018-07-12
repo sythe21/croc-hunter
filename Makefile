@@ -45,12 +45,14 @@ init-build:
 	go get -u github.com/golang/dep/cmd/dep
 	go get -u golang.org/x/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
-	dep status 2>&1 > /dev/null || dep init
+        # this craziness is due to a current dep problem between osx and linux versions
+	dep status 2>&1 > /dev/null || dep init 2>&1 > /dev/null || dep ensure
 
 init: init-build
 	go get -d github.com/goreleaser/goreleaser
 	cd ${GOPATH}/src/github.com/goreleaser/goreleaser && dep ensure -vendor-only && make setup build && mv goreleaser ${GOPATH}/bin
-	dep status 2>&1 > /dev/null || dep init
+        # this craziness is due to a current dep problem between osx and linux versions
+        dep status 2>&1 > /dev/null || dep init 2>&1 > /dev/null || dep ensure
 
 dep:
 	dep ensure
