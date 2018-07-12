@@ -25,6 +25,11 @@ type User struct {
 	Email     string `json:"email"`
 }
 
+type Diag struct {
+	Headers map[string][]string `json:"headers"`
+	Uri string
+}
+
 func main() {
 	users := []User{{FirstName: "Dhiraj", LastName: "Ray", Email: "dhiraj@gmail.com"}}
 	usersJSON, _ := json.Marshal(users)
@@ -40,6 +45,15 @@ func main() {
 			})
 			http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
+			})
+			http.HandleFunc("/diag", func(w http.ResponseWriter, r *http.Request) {
+				response := &Diag{
+					Headers: r.Header,
+					Uri: r.RequestURI,
+				}
+				json, _ := json.Marshal(response)
+				w.Header().Add("Content-Type", "application/json")
+				w.Write(json)
 			})
 
 			log.Fatal(http.ListenAndServe(":8888", nil))
